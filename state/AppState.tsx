@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { friendsApi } from "../services/friendsApi";
 
 export type Friend = {
@@ -53,18 +53,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([]);
 
-  async function refreshAll() {
+ const refreshAll = useCallback(async () => {
   if (adminMode) return;
 
-  // 1) requests
-  const [inc, out] = await Promise.all([
+  const [inc, out, fr] = await Promise.all([
     friendsApi.getIncomingRequests(),
     friendsApi.getOutgoingRequests(),
+    friendsApi.getFriends(),
   ]);
 
-  // inc/out DTO з бекенда мають форму: { id, username, status, createdAt }
-  // incoming.username = requester
-  // outgoing.username = addressee
   setIncomingRequests(
     inc.map((dto: any) => ({
       id: String(dto.id),
@@ -83,15 +80,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }))
   );
 
-  // 2) friends (ACCEPTED)
-  const fr = await friendsApi.getFriends();
   setFriends(
     fr.map((x: any) => ({
       username: x.username,
       displayName: x.username,
     }))
   );
-}
+}, [adminMode, myUsername]);
 
   const value = useMemo<AppState>(() => {
     async function sendFriendRequest(addresseeUsername: string) {

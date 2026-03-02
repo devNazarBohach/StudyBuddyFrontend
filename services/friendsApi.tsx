@@ -106,7 +106,6 @@ async function httpJson<T>(
   }
 
   if (res.status === 401) {
-    // токен протух/невалідний — чистимо
     await clearToken();
   }
 
@@ -174,12 +173,25 @@ export const friendsApi = {
     return { ok: true, message: typeof raw === "string" ? raw : undefined };
   },
 
-  async getFriends(): Promise<FriendshipDTO[]> {
+async getFriends(): Promise<FriendshipDTO[]> {
+  try {
     const raw = await httpJson<ApiEnvelope<FriendshipDTO[]> | FriendshipDTO[]>(
       `/user/friends`
     );
-    return unwrapData<FriendshipDTO[]>(raw) ?? [];
-  },
+
+    console.log("RAW /user/friends =", JSON.stringify(raw, null, 2));
+
+    const data = unwrapData<FriendshipDTO[]>(raw) ?? [];
+
+    console.log("DATA /user/friends =", JSON.stringify(data, null, 2));
+    // тут ти побачиш createdAt з бекенда
+
+    return data;
+  } catch (e) {
+    console.log("GET /user/friends ERROR =", e);
+    throw e;
+  }
+},
 };
 
 export function toUserMessage(e: unknown): string {

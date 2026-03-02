@@ -4,26 +4,19 @@ import { Alert, Pressable, StyleSheet, TextInput } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { friendsApi } from "@/constants/api";
-import { getToken } from "@/constants/tokens";
+import { useAppState } from "@/state/AppState";
 
 export default function AddFriendScreen() {
   const [friendUsername, setFriendUsername] = useState("");
+  const { sendFriendRequest } = useAppState();
 
-  async function sendRequest() {
-  console.log("TOKEN BEFORE ADD FRIEND:", await getToken());
+ async function sendRequest() {
   const u = friendUsername.trim().replace(/^@/, "");
   if (!u) return;
 
   try {
-    const res = await friendsApi.makeRequest(u);
-
-    if (!res.ok) {
-      Alert.alert("Error", res.data?.message ?? `HTTP ${res.status}`);
-      return;
-    }
-
-    Alert.alert("Success", res.data?.message ?? "Request sent");
+    await sendFriendRequest(u);
+    Alert.alert("Success", "Request sent");
     router.back();
   } catch (e: any) {
     Alert.alert("Error", e?.message ?? "Unknown error");

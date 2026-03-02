@@ -31,8 +31,8 @@ export default function FriendsScreen() {
   const [list, setList] = useState<{username: string; displayName: string}[]>([]);
 useFocusEffect(
   useCallback(() => {
-    setList(friends.map(x => ({ username: x.username, displayName: x.displayName || x.username })));
-  }, [friends])
+    refreshAll().catch((e) => console.log("AUTO REFRESH ERROR", e));
+  }, [refreshAll])
 );
   console.log("FRIENDS IN UI:", friends);
   return (
