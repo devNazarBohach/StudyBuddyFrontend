@@ -10,70 +10,73 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { API_BASE_URL } from "@/constants/api";
+import { authApi } from "@/constants/api";
+import { getToken, saveToken } from "@/constants/tokens";
+import { useAppState } from "@/state/AppState";
 
 type LoginPayload = {
-  email: string;
+  username: string;
   password: string;
 };
 
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const { setMyUsername, setAdminMode } = useAppState();
 
   function validate(p: LoginPayload) {
-    if (!p.email.trim() || !p.password.trim()) return "Email and password are required";
-    if (!p.email.includes("@")) return "Email looks invalid";
+    if (!p.username.trim() || !p.password.trim()) return "Username and password are required";
     if (p.password.length < 8) return "Password must be at least 8 characters";
     return null;
   }
 
   async function onLogin() {
-    const payload: LoginPayload = { email: email.trim(), password };
+  const payload: LoginPayload = { username: username.trim(), password };
 
-    const err = validate(payload);
-    if (err) {
-      Alert.alert("Validation error", err);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await res.text();
-
-      if (!res.ok) {
-        Alert.alert("Login failed", text || `HTTP ${res.status}`);
-        return;
-      }
-
-      Alert.alert("Success", "Logged in");
-
-    } catch (e: any) {
-      Alert.alert("Network error", e?.message ?? "Unknown error");
-    } finally {
-      setLoading(false);
-    }
+  if (!payload.username || !payload.password) {
+    Alert.alert("Validation error", "Username and password are required");
+    return;
   }
+
+  try {
+    setLoading(true);
+
+    const res = await authApi.login(payload);
+
+const token = res.data?.token;
+if (!token) {
+  Alert.alert("Login failed", res.data?.message ?? "Invalid credentials");
+  return;
+}
+
+await saveToken(token);
+console.log("SAVED TOKEN?", await getToken()); // має вивести строку токена
+setMyUsername(username.trim());   // або що ти вводиш в інпут
+setAdminMode(false);              // щоб перестав бути mock режим
+
+router.replace("/friends");
+
+Alert.alert("Success", "Logged in");
+router.replace("/friends");
+  } catch (e: any) {
+    Alert.alert("Network error", e?.message ?? "Unknown error");
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title">Login</ThemedText>
 
       <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Username"
         autoCapitalize="none"
-        keyboardType="email-address"
+        keyboardType="default"
         style={styles.input}
         placeholderTextColor="#888"
       />

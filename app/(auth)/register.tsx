@@ -1,3 +1,4 @@
+import { saveToken } from "@/constants/tokens";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -9,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { API_BASE_URL } from "../../constants/api";
+import { authApi } from "../../constants/api";
 
 type RegisterPayload = {
   email: string;
@@ -33,51 +34,40 @@ export default function RegisterScreen() {
     return null;
   }
 
-  async function onRegister() {
-    const payload: RegisterPayload = {
-      email: email.trim(),
-      username: username.trim(),
-      password,
-    };
+async function onRegister() {
+  const payload: RegisterPayload = {
+    email: email.trim(),
+    username: username.trim(),
+    password,
+  };
 
-    const err = validate(payload);
-    if (err) {
-      Alert.alert("Validation error", err);
+  const err = validate(payload);
+  if (err) {
+    Alert.alert("Validation error", err);
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const res = await authApi.register(payload);
+
+    const token = res.data?.token;
+    if (!token) {
+      Alert.alert("Register failed", res.data?.message ?? "No token returned");
       return;
     }
 
-    try {
-      setLoading(true);
+    await saveToken(token);
 
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await res.text();
-
-      if (!res.ok) {
-        Alert.alert("Register failed", text || `HTTP ${res.status}`);
-        return;
-      }
-
-      let data: any = null;
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        data = text;
-      }
-
-      Alert.alert("Success", "Registered successfully");
-
-      router.replace("/(tabs)");
-    } catch (e: any) {
-      Alert.alert("Network error", e?.message ?? "Unknown error");
-    } finally {
-      setLoading(false);
-    }
+    Alert.alert("Success", "Registered successfully");
+    router.replace("/friends"); 
+  } catch (e: any) {
+    Alert.alert("Network error", e?.message ?? "Unknown error");
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <View style={styles.container}>

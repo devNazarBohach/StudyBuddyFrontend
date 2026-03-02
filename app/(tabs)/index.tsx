@@ -15,12 +15,18 @@ export default function HomeAuthChoiceScreen() {
         Choose how you want to continue
       </ThemedText>
 
-      <Pressable style={styles.primaryBtn} onPress={() => router.push("/auth/login")}>
+      {/* ✅ IMPORTANT: use /(auth)/... if you have app/(auth)/login.tsx */}
+      <Pressable style={styles.primaryBtn} onPress={() => router.push("../(auth)/login")}>
         <ThemedText style={styles.primaryBtnText}>Login</ThemedText>
       </Pressable>
 
-      <Pressable style={styles.secondaryBtn} onPress={() => router.push("/auth/register")}>
+      <Pressable style={styles.secondaryBtn} onPress={() => router.push("../(auth)/register")}>
         <ThemedText style={styles.secondaryBtnText}>Create account</ThemedText>
+      </Pressable>
+
+      {/* ✅ Admin shortcut (no backend) */}
+      <Pressable style={styles.adminBtn} onPress={() => router.replace("/friends")}>
+        <ThemedText style={styles.adminBtnText}>Enter as admin</ThemedText>
       </Pressable>
     </ThemedView>
   );
@@ -50,4 +56,14 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   secondaryBtnText: { color: "#111", fontWeight: "600" },
+
+  adminBtn: {
+    height: 48,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#e6e6e6",
+    marginTop: 8,
+  },
+  adminBtnText: { fontWeight: "600" },
 });
